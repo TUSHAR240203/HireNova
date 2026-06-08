@@ -1,5 +1,5 @@
-import { Document, FilterQuery, UpdateQuery, QueryOptions } from 'mongoose';
-import { TenantAwareRepository } from '../repositories/base.repository';
+import { Document, FilterQuery, UpdateQuery } from 'mongoose';
+import { TenantAwareRepository, FindOptions } from '../repositories/base.repository';
 
 export class BaseService<T extends Document> {
   constructor(protected repository: TenantAwareRepository<T>) {}
@@ -8,12 +8,16 @@ export class BaseService<T extends Document> {
     return this.repository.create(companyId, data);
   }
 
-  async getAll(companyId: string, filter?: FilterQuery<T>): Promise<T[]> {
-    return this.repository.find(companyId, filter);
+  async getAll(companyId: string, filter?: FilterQuery<T>, options?: FindOptions): Promise<T[]> {
+    return this.repository.find(companyId, filter, options);
   }
 
-  async getById(companyId: string, id: string): Promise<T | null> {
-    return this.repository.findById(companyId, id);
+  async getById(companyId: string, id: string, projection?: any): Promise<T | null> {
+    return this.repository.findById(companyId, id, projection);
+  }
+
+  async count(companyId: string, filter?: FilterQuery<T>): Promise<number> {
+    return this.repository.count(companyId, filter);
   }
 
   async update(companyId: string, id: string, update: UpdateQuery<T>): Promise<T | null> {

@@ -7,6 +7,8 @@ import { logger } from './utils/logger';
 
 import apiRouter from './routes';
 
+import { connectDatabase } from './config/db';
+
 const app = express();
 
 // Enable Cross-Origin Resource Sharing
@@ -34,10 +36,17 @@ app.use('/api/v1', apiRouter);
 // Error handling middleware
 app.use(errorHandler);
 
-// Boot Express Server
-app.listen(config.port, () => {
-  logger.info(`🚀 HireNova Server active on Port ${config.port}`);
-  logger.info(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-});
+// Connect database and start Express API server
+connectDatabase()
+  .then(() => {
+    app.listen(config.port, () => {
+      logger.info(`🚀 HireNova Server active on Port ${config.port}`);
+      logger.info(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    });
+  })
+  .catch((err) => {
+    logger.error('Critical database boot initialization failed: %O', err);
+    process.exit(1);
+  });
 
 export default app;

@@ -1,3 +1,12 @@
-// MongoDB collection schemas registration layer
-// Real collection models are detailed in Phase 3.
-export const registeredModels = [];
+export * from './Company';
+export * from './User';
+export * from './Job';
+export * from './Candidate';
+export * from './Application';
+export * from './Assessment';
+export * from './Question';
+export * from './Prompt';
+export * from './Audit';
+export * from './AIUsage';
+export * from './IdempotencyKey';
+export * from './AssessmentIntegrityLog';

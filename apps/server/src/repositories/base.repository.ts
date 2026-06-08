@@ -1,5 +1,12 @@
 import { Model, Document, FilterQuery, UpdateQuery, QueryOptions } from 'mongoose';
 
+export interface FindOptions {
+  limit?: number;
+  skip?: number;
+  sort?: Record<string, 1 | -1>;
+  projection?: any;
+}
+
 export class TenantAwareRepository<T extends Document> {
   constructor(protected model: Model<T>) {}
 
@@ -15,11 +22,22 @@ export class TenantAwareRepository<T extends Document> {
   async find(
     companyId: string,
     filter: FilterQuery<T> = {},
-    projection?: any,
-    options?: QueryOptions
+    options: FindOptions = {}
   ): Promise<T[]> {
     const tenantQuery = this.getTenantQuery(companyId, filter);
-    return this.model.find(tenantQuery, projection, options).exec();
+    const query = this.model.find(tenantQuery, options.projection);
+
+    if (options.sort) {
+      query.sort(options.sort);
+    }
+    if (options.skip !== undefined) {
+      query.skip(options.skip);
+    }
+    if (options.limit !== undefined) {
+      query.limit(options.limit);
+    }
+
+    return query.exec();
   }
 
   async findOne(
@@ -32,8 +50,13 @@ export class TenantAwareRepository<T extends Document> {
     return this.model.findOne(tenantQuery, projection, options).exec();
   }
 
-  async findById(companyId: string, id: string): Promise<T | null> {
-    return this.model.findOne({ _id: id, companyId } as FilterQuery<T>).exec();
+  async findById(companyId: string, id: string, projection?: any): Promise<T | null> {
+    return this.model.findOne({ _id: id, companyId } as FilterQuery<T>, projection).exec();
+  }
+
+  async count(companyId: string, filter: FilterQuery<T> = {}): Promise<number> {
+    const tenantQuery = this.getTenantQuery(companyId, filter);
+    return this.model.countDocuments(tenantQuery).exec();
   }
 
   async update(
