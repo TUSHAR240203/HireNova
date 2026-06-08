@@ -2,6 +2,10 @@ import express from 'express';
 import cors from 'cors';
 import { config } from './config';
 import { errorHandler } from './middlewares/errorHandler';
+import { rateLimiter } from './middlewares/rateLimiter';
+import { logger } from './utils/logger';
+
+import apiRouter from './routes';
 
 const app = express();
 
@@ -9,44 +13,31 @@ const app = express();
 app.use(cors({
   origin: '*', // In production, replace with specific tenant custom domains or whitelist
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-tenant-id']
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-tenant-id', 'idempotency-key']
 }));
 
 // Parse request bodies
 app.use(express.json());
 
-// Global Logging middleware
+// Apply global rate limiting middleware (100 requests per minute)
+app.use(rateLimiter({ windowMs: 60 * 1000, max: 100 }));
+
+// HTTP Request logging mapped via Winston
 app.use((req, res, next) => {
-  console.log(`[Request Triggered]: ${req.method} ${req.path} - Origin: ${req.ip}`);
+  logger.info(`HTTP Request: ${req.method} ${req.path} - Client IP: ${req.ip}`);
   next();
 });
 
-// Central Health check route
-app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'online',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime()
-  });
-});
-
-// Mock route to trigger validation error check
-app.get('/test-error', (req, res, next) => {
-  const err: any = new Error('Database operational connection failed');
-  err.statusCode = 503;
-  err.code = 'DB_CONN_TIMEOUT';
-  next(err);
-});
+// Wire central API routing endpoints under version namespaces
+app.use('/api/v1', apiRouter);
 
 // Error handling middleware
 app.use(errorHandler);
 
 // Boot Express Server
 app.listen(config.port, () => {
-  console.log(`=========================================`);
-  console.log(`🚀 HireNova Server active on Port ${config.port}`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`=========================================`);
+  logger.info(`🚀 HireNova Server active on Port ${config.port}`);
+  logger.info(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
 export default app;

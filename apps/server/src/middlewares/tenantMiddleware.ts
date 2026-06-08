@@ -1,12 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 
 export function enforceTenancy(
-  req: TenantRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) {
+  const tenantReq = req as TenantRequest;
   // Extract tenant identity exclusively from cryptographically verified token payload
-  const companyId = req.user?.companyId;
+  const companyId = tenantReq.user?.companyId;
 
   if (!companyId) {
     return res.status(401).json({
@@ -15,7 +16,7 @@ export function enforceTenancy(
   }
 
   // Bind tenant identifier for repository query layers
-  req.companyId = companyId;
+  tenantReq.companyId = companyId;
   next();
 }
 export interface TenantRequest extends Request {
