@@ -13,6 +13,7 @@ import jobRouter from './job.routes';
 import candidateRouter from './candidate.routes';
 import assessmentRouter from './assessment.routes';
 import interviewRouter from './interview.routes';
+import auditLogRouter from './audit.routes';
 
 const router = Router();
 
@@ -22,6 +23,7 @@ router.use('/jobs', jobRouter);
 router.use('/candidates', candidateRouter);
 router.use('/assessments', assessmentRouter);
 router.use('/interviews', interviewRouter);
+router.use('/audit-logs', auditLogRouter);
 
 
 // Global health endpoint

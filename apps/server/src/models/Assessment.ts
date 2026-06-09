@@ -127,8 +127,6 @@ const AssessmentAttemptSchema = new Schema<IAssessmentAttempt>({
 });
 
 AssessmentAttemptSchema.index({ companyId: 1, status: 1 });
-AssessmentAttemptSchema.index({ assessmentId: 1 });
-AssessmentAttemptSchema.index({ candidateId: 1 });
 
 export const Assessment = model<IAssessment>('assessments', AssessmentSchema);
 export const AssessmentAttempt = model<IAssessmentAttempt>('assessmentAttempts', AssessmentAttemptSchema);

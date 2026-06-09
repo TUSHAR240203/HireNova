@@ -240,6 +240,16 @@ describe('HireNova Route Integration Tests', () => {
       attemptId = attempt._id.toString();
     });
 
+    it('should list all coding problems for this tenant', async () => {
+      const res = await request(server)
+        .get('/api/v1/assessments/coding-problems')
+        .set('Authorization', `Bearer ${adminToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.length).toBeGreaterThan(0);
+    });
+
     it('should execute candidate code successfully and pass tests', async () => {
       const code = `
         function solution(input) {
@@ -318,4 +328,26 @@ describe('HireNova Route Integration Tests', () => {
       expect(res.body.data.status).toBe('InProgress');
     });
   });
+
+  describe('7. Enterprise Auditing & AI Logs', () => {
+    it('should fetch audit logs', async () => {
+      const res = await request(server)
+        .get('/api/v1/audit-logs')
+        .set('Authorization', `Bearer ${adminToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.length).toBeGreaterThan(0);
+    });
+
+    it('should fetch AI usage logs', async () => {
+      const res = await request(server)
+        .get('/api/v1/audit-logs/ai-usage')
+        .set('Authorization', `Bearer ${adminToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+  });
 });
+

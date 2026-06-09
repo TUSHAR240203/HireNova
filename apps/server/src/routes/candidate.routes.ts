@@ -243,4 +243,18 @@ router.get('/applications', async (req: any, res) => {
   }
 });
 
+// Fetch all candidates for the current company tenant
+router.get('/', async (req: any, res) => {
+  try {
+    const companyId = req.companyId;
+    const candidates = await Candidate.find({ companyId: new mongoose.Types.ObjectId(companyId) }).sort({ createdAt: -1 });
+    res.status(200).json({
+      success: true,
+      data: candidates
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to fetch candidates', details: err.message });
+  }
+});
+
 export default router;

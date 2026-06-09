@@ -118,6 +118,25 @@ router.post(
   }
 );
 
+// Fetch all coding problems
+router.get('/coding-problems', requireAuth, enforceTenancy, async (req: any, res) => {
+  try {
+    const companyId = req.companyId;
+    const problems = await CodingProblem.find({
+      $or: [
+        { companyId: new mongoose.Types.ObjectId(companyId) },
+        { companyId: null }
+      ]
+    });
+    res.status(200).json({
+      success: true,
+      data: problems
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to fetch coding problems', details: err.message });
+  }
+});
+
 // 4. Secure Sandbox Code Execution
 router.post(
   '/attempts/:attemptId/execute',
