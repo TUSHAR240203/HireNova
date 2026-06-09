@@ -8,7 +8,21 @@ import { auditEvent } from '../middlewares/audit';
 import { AssessmentIntegrityLog } from '../models';
 import mongoose from 'mongoose';
 
+import authRouter from './auth.routes';
+import jobRouter from './job.routes';
+import candidateRouter from './candidate.routes';
+import assessmentRouter from './assessment.routes';
+import interviewRouter from './interview.routes';
+
 const router = Router();
+
+// Wire new sub-routers
+router.use('/auth', authRouter);
+router.use('/jobs', jobRouter);
+router.use('/candidates', candidateRouter);
+router.use('/assessments', assessmentRouter);
+router.use('/interviews', interviewRouter);
+
 
 // Global health endpoint
 router.get('/health', (req, res) => {

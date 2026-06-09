@@ -10,3 +10,4 @@ export * from './Audit';
 export * from './AIUsage';
 export * from './IdempotencyKey';
 export * from './AssessmentIntegrityLog';
+export * from './Interview';
