@@ -1,0 +1,174 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: hirenova
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hirenova-config
+  namespace: hirenova
+data:
+  NODE_ENV: "production"
+  PORT: "3000"
+  MONGODB_URI: "mongodb://hirenova-mongodb.hirenova.svc.cluster.local:27017/hirenova"
+  REDIS_URI: "redis://hirenova-redis.hirenova.svc.cluster.local:6379"
+  OPENSEARCH_URL: "http://hirenova-opensearch.hirenova.svc.cluster.local:9200"
+  KAFKA_BROKERS: "hirenova-kafka.hirenova.svc.cluster.local:9092"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hirenova-server
+  namespace: hirenova
+  labels:
+    app: hirenova-server
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: hirenova-server
+  template:
+    metadata:
+      labels:
+        app: hirenova-server
+    spec:
+      containers:
+        - name: server
+          image: hirenova-server:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          envFrom:
+            - configMapRef:
+                name: hirenova-config
+          livenessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hirenova-server-svc
+  namespace: hirenova
+spec:
+  selector:
+    app: hirenova-server
+  ports:
+    - protocol: TCP
+      port: 3000
+      targetPort: 3000
+  type: ClusterIP
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: hirenova-server-hpa
+  namespace: hirenova
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: hirenova-server
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hirenova-client
+  namespace: hirenova
+  labels:
+    app: hirenova-client
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: hirenova-client
+  template:
+    metadata:
+      labels:
+        app: hirenova-client
+    spec:
+      containers:
+        - name: client
+          image: hirenova-client:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hirenova-client-svc
+  namespace: hirenova
+spec:
+  selector:
+    app: hirenova-client
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: NodePort
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: hirenova-client-hpa
+  namespace: hirenova
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: hirenova-client
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
